@@ -1,2 +1,2 @@
-# plugin_system
-System of plugin written in Rust
+# plugins_system
+System of plugins written in Rust
