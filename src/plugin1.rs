@@ -2,7 +2,13 @@ use pluggable::AppRef;
 use pluginbuilder::{PluginWithOptions, Plugin};
 
 pub struct Plugin1Options {
-    pub val1: u32,
+    val1: u32,
+}
+
+impl Plugin1Options {
+    pub fn new(v: u32) -> Self {
+        Plugin1Options { val1: v }
+    }
 }
 
 pub struct Plugin1 {

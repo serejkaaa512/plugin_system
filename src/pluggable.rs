@@ -1,3 +1,4 @@
+use std::thread;
 use std::cell::RefCell;
 use std::rc::Rc;
 use app::M;
@@ -15,6 +16,7 @@ pub enum Plugins {
 pub struct Pluggable {
     app: AppRef,
     plugins: Vec<Box<Plugin>>,
+    is_running: bool,
 }
 
 impl Pluggable {
@@ -22,7 +24,14 @@ impl Pluggable {
         Pluggable {
             app: Rc::new(RefCell::new(app)),
             plugins: vec![],
+            is_running: false,
         }
+    }
+
+    pub fn start_app(&mut self) {
+        self.app
+            .borrow_mut()
+            .run();
     }
 
     pub fn load_plugin(&mut self, pl_name: Plugins) {
@@ -39,12 +48,19 @@ impl Pluggable {
     }
 
     pub fn start_plugins(&mut self) {
-        for pl in self.plugins.iter_mut() {
-            pl.run();
-        }
+        self.is_running = true;
+        thread::spawn(|| {
+            while self.is_running {
+                for pl in self.plugins.iter_mut() {
+                    pl.run();
+                }
+            }
+        });
+
     }
 
     pub fn stop_plugins(&mut self) {
+        self.is_running = false;
         for pl in self.plugins.iter_mut() {
             pl.stop();
         }
