@@ -1,0 +1,10 @@
+[package]
+name = "plugin_system"
+version = "0.1.0"
+authors = ["serg"]
+
+[[bin]]
+name = "main"
+doc = false
+
+[dependencies]
