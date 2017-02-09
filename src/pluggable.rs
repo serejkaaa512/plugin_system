@@ -4,7 +4,6 @@ use plugin1::{Plugin1Options, Plugin1};
 use plugin2::Plugin2;
 use pluginbuilder::{Plugin, PluginWithOptions};
 use std::thread;
-use std::thread::JoinHandle;
 
 pub type AppRef = Arc<RwLock<M>>;
 
@@ -13,21 +12,11 @@ pub enum Plugins {
     Plugin2,
 }
 
+#[derive(Clone)]
 pub struct Pluggable {
     app: AppRef,
     plugins: Arc<RwLock<Vec<Box<Plugin>>>>,
     is_running: Arc<RwLock<bool>>,
-}
-
-
-impl Clone for Pluggable {
-    fn clone(&self) -> Self {
-        Pluggable {
-            app: self.app.clone(),
-            plugins: self.plugins.clone(),
-            is_running: self.is_running.clone(),
-        }
-    }
 }
 
 impl Pluggable {
