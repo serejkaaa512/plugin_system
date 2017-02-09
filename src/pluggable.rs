@@ -4,6 +4,7 @@ use plugin1::{Plugin1Options, Plugin1};
 use plugin2::Plugin2;
 use pluginbuilder::{Plugin, PluginWithOptions};
 use std::thread;
+use std::thread::JoinHandle;
 
 pub type AppRef = Arc<RwLock<M>>;
 
@@ -14,16 +15,27 @@ pub enum Plugins {
 
 pub struct Pluggable {
     app: AppRef,
-    plugins: Vec<Box<Plugin>>,
-    pub is_running: bool,
+    plugins: Arc<RwLock<Vec<Box<Plugin>>>>,
+    is_running: Arc<RwLock<bool>>,
+}
+
+
+impl Clone for Pluggable {
+    fn clone(&self) -> Self {
+        Pluggable {
+            app: self.app.clone(),
+            plugins: self.plugins.clone(),
+            is_running: self.is_running.clone(),
+        }
+    }
 }
 
 impl Pluggable {
     pub fn new(app: M) -> Self {
         Pluggable {
             app: Arc::new(RwLock::new(app)),
-            plugins: vec![],
-            is_running: false,
+            plugins: Arc::new(RwLock::new(vec![])),
+            is_running: Arc::new(RwLock::new(true)),
         }
     }
 
@@ -37,26 +49,38 @@ impl Pluggable {
 
             Plugins::Plugin2 => Box::new(Plugin2::new()),
         };
-        self.plugins.push(plugin);
+        self.plugins.write().unwrap().push(plugin);
     }
 
 
     pub fn run_app(&mut self) {
-        self.app
-            .write()
-            .expect("Cant run app!")
-            .run();
+        let self_clone = self.clone();
+        thread::spawn(move || {
+            while *self_clone.is_running.read().unwrap() {
+                self_clone.app
+                    .write()
+                    .expect("Cant run app!")
+                    .run();
+                thread::yield_now();
+            }
+        });
     }
 
     pub fn run_plugins(&mut self) {
-        for pl in self.plugins.iter_mut() {
-            pl.run();
-        }
+        let self_clone = self.clone();
+        thread::spawn(move || {
+            while *self_clone.is_running.read().unwrap() {
+                for pl in self_clone.plugins.write().unwrap().iter_mut() {
+                    pl.run();
+                }
+                thread::yield_now();
+            }
+        });
     }
 
     pub fn stop(&mut self) {
-        self.is_running = false;
-        for pl in self.plugins.iter_mut() {
+        *self.is_running.write().unwrap() = false;
+        for pl in self.plugins.write().unwrap().iter_mut() {
             pl.stop();
         }
     }
