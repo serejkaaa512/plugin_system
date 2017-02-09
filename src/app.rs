@@ -1,6 +1,6 @@
 #[derive(Copy, Clone)]
 pub struct M {
-    pub m: u32,
+    pub m: i32,
 }
 
 impl M {
@@ -9,7 +9,7 @@ impl M {
     }
 
     pub fn run(&mut self) {
-        self.m = self.m + 10;
+        self.m = self.m - 1;
         println!("App is running. M = {}", self.m);
     }
 }
